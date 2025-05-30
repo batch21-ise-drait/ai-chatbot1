@@ -1,0 +1,103 @@
+Importing Necessary Libraries
+import io
+import random
+import string # to process standard python strings
+import warnings
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import warnings
+warnings.filterwarnings('ignore')
+#NLTK, or the Natural Language Toolkit, is a popular Python library for working with human language data, specifically for natural language processing (NLP) and text analysis tasks. NLTK provides easy-to-use interfaces to over 50 corpora and lexical resources, such as WordNet, along with a suite of text processing libraries for tasks like tokenization, stemming, parsing, and more.
+
+Installing NLTK Packages
+import nltk
+from nltk.stem import WordNetLemmatizer
+nltk.download('popular', quiet=True) # for downloading packages
+#nltk.download('punkt') # first-time use only
+#nltk.download('wordnet') # first-time use only
+True
+
+f = open('chatbot.txt', 'r', errors = 'ignore')
+raw = f.read()
+raw = raw.lower() #converts to lowercase
+Tokenization
+sent_tokens = nltk.sent_tokenize(raw)# converts to list of sentences 
+word_tokens = nltk.word_tokenize(raw) # converts to list of words
+Preprocessing
+lemmer = nltk.stem.WordNetLemmatizer()
+##WordNet is a semantically-oriented dictionary of English included in NLTK.
+def LemTokens(tokens):
+    return [lemmer.lemmatize(token) for token in tokens]
+remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
+
+def LemNormalize(text):
+    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict)))
+Keyword Matching
+GREETING_INPUTS = ("hello", "hi", "greetings", "sup", "what's up","hey",)
+GREETING_RESPONSES = ["hi", "hey", "*nods*", "hi there", "hello", "I am glad! You are talking to me"]
+def greeting(sentence):
+ 
+    for word in sentence.split():
+        if word.lower() in GREETING_INPUTS:
+            return random.choice(GREETING_RESPONSES)
+def response(user_response):
+    robo_response=''
+    sent_tokens.append(user_response)
+    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
+    tfidf = TfidfVec.fit_transform(sent_tokens)
+    vals = cosine_similarity(tfidf[-1], tfidf)
+    idx=vals.argsort()[0][-2]
+    flat = vals.flatten()
+    flat.sort()
+    req_tfidf = flat[-2]
+    if(req_tfidf==0):
+        robo_response=robo_response+"I am sorry! I don't understand you"
+        return robo_response
+    else:
+        robo_response = robo_response+sent_tokens[idx]
+        return robo_response
+#def response(user_response):: This line defines a function named response that takes one argument user_response. This argument is expected to be a string, representing the input provided by the user.
+
+#robo_response = '': Initializes an empty string variable named robo_response to store the response that the chatbot will generate.
+
+#sent_tokens.append(user_response): This line appends the user's input to a list called sent_tokens. This list is used to store the tokens (words or phrases) from previous user inputs and will be used to compute a response based on the user's query.
+#
+#TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english'): This line initializes a TF-IDF (Term Frequency-Inverse Document Frequency) vectorizer. TF-IDF is a numerical statistic that reflects the importance of a word or phrase within a collection of documents. In this case, it is used to convert the text data into numerical vectors for further processing. The tokenizer argument specifies a function LemNormalize for tokenization, and stop_words='english' indicates that common English stop words should be ignored during vectorization.
+
+#tfidf = TfidfVec.fit_transform(sent_tokens): This line uses the TF-IDF vectorizer to transform the list sent_tokens into a matrix of TF-IDF values. Each row in the matrix corresponds to a sentence or input in sent_tokens, and each column corresponds to a unique word or phrase in the entire collection of inputs.
+
+#vals = cosine_similarity(tfidf[-1], tfidf): This line calculates the cosine similarity between the TF-IDF vector of the last element in sent_tokens (which is the user's input) and all the other vectors in the tfidf matrix. Cosine similarity is a measure of how similar two vectors are and is often used in natural language processing to determine the similarity between text documents.
+
+#idx = vals.argsort()[0][-2]: This line finds the index of the sentence in sent_tokens that has the second-highest cosine similarity with the user's input. It assumes that the highest similarity (with itself) will always be at the end of the vals array.
+
+#flat = vals.flatten(): This line flattens the vals matrix into a one-dimensional array.
+
+#flat.sort(): The array of cosine similarity values is sorted in ascending order.
+
+#req_tfidf = flat[-2]: This line retrieves the second-to-last value in the sorted array of cosine similarity values, which represents the cosine
+
+flag=True
+print("Julie: My name is Julie. I will answer your queries about Chatbots. If you want to exit, type Bye!")
+while(flag==True):
+    user_response = input()
+    user_response=user_response.lower()
+    if(user_response!='bye'):
+        if(user_response=='thanks' or user_response=='thank you' ):
+            flag=False
+            print("Julie: You are welcome..")
+        else:
+            if(greeting(user_response)!=None):
+                print("Julie: "+greeting(user_response))
+            else:
+                print("Julie: ",end="")
+                print(response(user_response))
+                sent_tokens.remove(user_response)
+    else:
+        flag=False
+        print("Julie: Bye! take care..")
+Julie: My name is Julie. I will answer your queries about Chatbots. If you want to exit, type Bye!
+Hi
+Julie: hey
+Bye
+Julie: Bye! take care..
